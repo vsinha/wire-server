@@ -1,0 +1,17 @@
+{
+  "name": "Chatter",
+  "version": "0.0.1",
+  "description": "The server for the chatter iOS app",
+  "main": "index.js",
+  "dependencies": {
+    "firebase": "~1.1.1",
+    "fbgraph": "~0.2.13",
+    "apn": "~1.6.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "test"
+  },
+  "author": "Andrew Linfoot",
+  "license": "BSD-2-Clause"
+}

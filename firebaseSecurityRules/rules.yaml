@@ -1,0 +1,195 @@
+functions:                      #reusable boolean functions
+  - isLoggedIn():               auth !== null
+  - createOnly():               next.exists() && !prev.exists()
+  - deleteOnly():               prev.exists() && !next.exists()
+  - createOrDelete():           createOnly() || deleteOnly()
+  - isUser(username):           username === root['user_mappings/'+auth.provider+'/'+auth.uid+'/username']
+  - isFriend(username):         root['users/'+username+'/friends/'+( root['user_mappings/'+auth.provider+'/'+auth.uid+'/username'].val() )].exists()
+  - hasUsername():              root['user_mappings/'+auth.provider+'/'+auth.uid+'/username'].exists()
+  - postedByFriend(status_id):  isFriend( root['statuses/'+status_id+'/username'].val() )
+  - postedByUser(status_id):    isUser( root['statuses/'+status_id+'/username'].val() )
+  - checkReply(status_id):      (status_id == null) || postedByFriend(status_id) || postedByUser(status_id)
+
+schema:
+  # DEFINITIONS USED FOR REPEATED DATA SCHEMAS
+  definitions:
+    location:
+      type: object
+      properties:
+        lat:
+          type: number
+        long:
+          type: number
+      required: [lat, long]
+      additionalProperties: false
+
+  # BEGIN APP SCHEMA
+  type: object
+  properties:
+    #users object
+    users:
+      type: object
+      $username:
+        type: object
+        properties:
+          public_profile:
+            type: object
+          facebook_auth:
+            type: string
+          installation:
+            type: object
+            properties: 
+              deviceType:
+                type: string
+              deviceToken:
+                type: string
+          location: {$ref: "#/definitions/location"}
+          friends:
+            ~$username:
+              type: boolean
+          notifications:
+            ~$notification_id:
+              type: boolean
+          statuses:
+            ~$status_id:
+              type: boolean
+
+    #usernames index for fast username lookup
+    usernames:
+      type: object
+      $username:
+        type: boolean
+        # Only Index Users Who Have accounts and
+        # Only Index Own Username
+        constraint: root['users/'+$username].exists() &&
+                    isUser($username)
+
+    #user mapping used to decouple user accounts from login method
+    user_mappings:
+      type: object
+      properties:
+        facebook:
+          $facebook_auth_id:
+            type: object
+            properties:
+              access_token:
+                type: string
+              cachedUserProfile:
+                type: object
+
+              displayName:
+                type: string
+              email:
+                type: string
+              id:
+                type: string
+              username:
+                type: string
+
+      additionalProperties: false
+
+    #statuses object
+    statuses:
+      type: object
+      $status_id:
+        type: object
+        properties:
+          createdAt:
+            type: string
+            constraint: createOnly()
+          location: 
+            $ref: "#/definitions/location"
+            constraint: createOnly()
+          text:
+            type: string
+            constraint: createOnly()
+          username:
+            type: string
+            # Only Create Statuses For Logged In User and
+            # cannot edit field once created
+            constraint: isUser(next.val()) &&
+                        createOnly()
+
+          replies:
+            type: object
+            ~$status_id:
+              type: boolean
+          in_reply_to:
+            type: string
+
+        required: [createdAt, location, text, username]
+        additionalProperties: false
+
+    #notifications object
+    notifications:
+      type: object
+      $notification_id:
+        type: object
+        properties:
+          status:
+            type: string
+          type:
+            type: string
+          username:
+            type: string
+
+    #used to track which status mentions already have
+    #had notifications objects created for them
+    mentionNotifications:
+      type: object
+      $mention_notification_id:
+        type: boolean
+
+
+  additionalProperties: false
+
+access:
+  # Logged In Users Can Read Another Users Public Profile
+  - location: /users/$username/public_profile/
+    read:     isLoggedIn()
+
+  # User Can Read All Data In Their User Object
+  - location: /users/$username/
+    read:     isUser($username)
+
+  # User Can Write All Data In Their User Object
+  - location: /users/$username/
+    write:    isUser($username) || ( createOnly() && !hasUsername() )
+
+  # User can read friend's statuses
+  - location: /users/$username/statuses/
+    read:     isFriend($username)
+
+  - location: /users/$username/location/
+    read:     isFriend($username)
+
+  # User Can Read And Write All Data In Their User Mapping Object  
+  - location: /user_mappings/facebook/$facebook_auth_id/
+    read:     $facebook_auth_id === auth.uid
+
+  # User Can Write Data In User Mapping Object
+  - location: /user_mappings/facebook/$facebook_auth_id/
+    write:    $facebook_auth_id === auth.uid
+
+  # User Can Read Their Notifications
+  - location: /notifications/$notification_id/
+    read:     isUser(prev.username.val())
+
+  # User Can Read All Friends' Statuses And Their Own Statuses
+  # Can not read statuses of friends that have
+  # replied to someone who is not your friend
+  - location: /statuses/$status_id/
+    read:     ( isFriend(prev.username.val()) && checkReply(prev.in_reply_to.val()) )
+              || isUser(prev.username.val())
+
+  # Logged In Users Can Write to statuses
+  - location: /statuses/
+    write:    isLoggedIn()
+
+  # Any logged in user can read usernames 
+  - location: /usernames/
+    read:     isLoggedIn()
+
+  # Any logged in user can write usernames
+  - location: /usernames/
+    write:    isLoggedIn()
