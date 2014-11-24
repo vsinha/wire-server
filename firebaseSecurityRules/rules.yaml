@@ -5,11 +5,11 @@ functions:                      #reusable boolean functions
   - createOnly():               next.exists() && !prev.exists()
   - deleteOnly():               prev.exists() && !next.exists()
   - createOrDelete():           createOnly() || deleteOnly()
-  - isUser(username):           username === root['user_mappings/'+auth.provider+'/'+auth.uid+'/username']
-  - isFriend(username):         root['users/'+username+'/friends/'+( root['user_mappings/'+auth.provider+'/'+auth.uid+'/username'].val() )].exists()
-  - hasUsername():              root['user_mappings/'+auth.provider+'/'+auth.uid+'/username'].exists()
-  - postedByFriend(status_id):  isFriend( root['statuses/'+status_id+'/username'].val() )
-  - postedByUser(status_id):    isUser( root['statuses/'+status_id+'/username'].val() )
+  - isUser(user_id):           user_id === root['user_mappings/'+auth.provider+'/'+auth.uid+'/user_id']
+  - isFriend(user_id):         root['users/'+user_id+'/friends/'+( root['user_mappings/'+auth.provider+'/'+auth.uid+'/user_id'].val() )].exists()
+  - hasUser_id():              root['user_mappings/'+auth.provider+'/'+auth.uid+'/user_id'].exists()
+  - postedByFriend(status_id):  isFriend( root['statuses/'+status_id+'/user_id'].val() )
+  - postedByUser(status_id):    isUser( root['statuses/'+status_id+'/user_id'].val() )
   - checkReply(status_id):      (status_id == null) || postedByFriend(status_id) || postedByUser(status_id)
   - isReasonableString(data):   (data.isString() && data.val().length < 1000)
 
@@ -32,11 +32,14 @@ schema:
     #users object
     users:
       type: object
-      $username:
+      $user_id:
         type: object
         properties:
           public_profile:
             type: object
+            properties:
+              username:
+                type: string
           facebook_auth:
             type: string
           installation:
@@ -48,7 +51,7 @@ schema:
                 type: string
           location: {$ref: "#/definitions/location"}
           friends:
-            ~$username:
+            ~$user_id:
               type: boolean
           notifications:
             ~$notification_id:
@@ -60,15 +63,16 @@ schema:
             ~$group_chat_id:
               type: boolean
 
-    #usernames index for fast username lookup
+    #usernames index for fast username and userid lookup
     usernames:
       type: object
       $username:
-        type: boolean
+        # value is the user_id
+        type: string
         # Only Index Users Who Have accounts and
         # Only Index Own Username
-        constraint: root['users/'+$username].exists() &&
-                    isUser($username)
+        constraint: root['users/'+next.value].exists() &&
+                    isUser(next.value)
 
     #user mapping used to decouple user accounts from login method
     user_mappings:
@@ -88,7 +92,7 @@ schema:
                 type: string
               id:
                 type: string
-              username:
+              user_id:
                 type: string
 
       additionalProperties: false
@@ -107,8 +111,8 @@ schema:
             constraint: createOnly()
           text:
             type: string
-            constraint: createOnly() && isReasonableString()
-          username:
+            constraint: createOnly()
+          user_id:
             type: string
             # Only Create Statuses For Logged In User and
             # cannot edit field once created
@@ -119,8 +123,7 @@ schema:
               type: boolean
           in_reply_to:
             type: string
-
-        required: [created_at, location, text, username]
+        required: [created_at, location, text, user_id]
         additionalProperties: false
 
     #notifications object
@@ -133,7 +136,7 @@ schema:
             type: string
           type:
             type: string
-          username:
+          user_id:
             type: string
 
     #used to track which status mentions already have
@@ -167,7 +170,7 @@ schema:
           $group_chat_id:
             type: object
             properties:
-              ~$username: 
+              ~$user_id: 
                 type: boolean
 
         messages:
@@ -184,33 +187,33 @@ schema:
                     $ref: "#/definitions/location"
                   text:
                     type: string
-                  username:
+                  user_id:
                     type: string
-                    constraint: isUser(next.val()) 
-          required: [created_at, location, text, username]
+                    constraint: isUser(next.val())
+          required: [created_at, location, text, user_id]
           additionalProperties: false
           
   additionalProperties: false
 
 access:
   # Logged In Users Can Read Another Users Public Profile
-  - location: /users/$username/public_profile/
+  - location: /users/$user_id/public_profile/
     read:     isLoggedIn()
 
   # User Can Read All Data In Their User Object
-  - location: /users/$username/
-    read:     isUser($username)
+  - location: /users/$user_id/
+    read:     isUser($user_id)
 
   # User Can Write All Data In Their User Object
-  - location: /users/$username/
-    write:    isUser($username) || ( createOnly() && !hasUsername() )
+  - location: /users/$user_id/
+    write:    isUser($user_id) || ( createOnly() && !hasUser_id() )
 
   # User can read friend's statuses
-  - location: /users/$username/statuses/
-    read:     isFriend($username)
+  - location: /users/$user_id/statuses/
+    read:     isFriend($user_id)
 
-  - location: /users/$username/location/
-    read:     isFriend($username)
+  - location: /users/$user_id/location/
+    read:     isFriend($user_id)
 
   # User Can Read And Write All Data In Their User Mapping Object  
   - location: /user_mappings/facebook/$facebook_auth_id/
@@ -222,14 +225,14 @@ access:
 
   # User Can Read Their Notifications
   - location: /notifications/$notification_id/
-    read:     isUser(prev.username.val())
+    read:     isUser(prev.user_id.val())
 
   # User Can Read All Friends' Statuses And Their Own Statuses
   # Can not read statuses of friends that have
   # replied to someone who is not your friend
   - location: /statuses/$status_id/
-    read:     ( isFriend(prev.username.val()) && checkReply(prev.in_reply_to.val()) )
-              || isUser(prev.username.val())
+    read:     ( isFriend(prev.user_id.val()) && checkReply(prev.in_reply_to.val()) )
+              || isUser(prev.user_id.val())
 
   # Logged In Users Can Write to statuses
   - location: /statuses/
