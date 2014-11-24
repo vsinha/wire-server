@@ -1,3 +1,5 @@
+# vim: ai:ts=2:sw=2:et!
+
 functions:                      #reusable boolean functions
   - isLoggedIn():               auth !== null
   - createOnly():               next.exists() && !prev.exists()
@@ -39,9 +41,9 @@ schema:
           installation:
             type: object
             properties: 
-              deviceType:
+              device_type:
                 type: string
-              deviceToken:
+              device_token:
                 type: string
           location: {$ref: "#/definitions/location"}
           friends:
@@ -52,6 +54,9 @@ schema:
               type: boolean
           statuses:
             ~$status_id:
+              type: boolean
+          groups:
+            ~$group_chat_id:
               type: boolean
 
     #usernames index for fast username lookup
@@ -74,10 +79,9 @@ schema:
             properties:
               access_token:
                 type: string
-              cachedUserProfile:
+              cached_user_profile:
                 type: object
-
-              displayName:
+              display_name:
                 type: string
               email:
                 type: string
@@ -94,7 +98,7 @@ schema:
       $status_id:
         type: object
         properties:
-          createdAt:
+          created_at:
             type: string
             constraint: createOnly()
           location: 
@@ -107,9 +111,7 @@ schema:
             type: string
             # Only Create Statuses For Logged In User and
             # cannot edit field once created
-            constraint: isUser(next.val()) &&
-                        createOnly()
-
+            constraint: isUser(next.val()) && createOnly()
           replies:
             type: object
             ~$status_id:
@@ -117,7 +119,7 @@ schema:
           in_reply_to:
             type: string
 
-        required: [createdAt, location, text, username]
+        required: [created_at, location, text, username]
         additionalProperties: false
 
     #notifications object
@@ -135,12 +137,58 @@ schema:
 
     #used to track which status mentions already have
     #had notifications objects created for them
-    mentionNotifications:
+    mention_notifications:
       type: object
       $mention_notification_id:
         type: boolean
 
+    group_chats:
+      type: object
+      properties:
+        group:
+          type: object
+          $group_chat_id:
+            type: object
+            properties:
+              group_name:
+                type: string
+              created_at:
+                type: string
+              created_by:
+                type: string
+              last_activity:
+                type: string
+          required: [created_at, created_by, group_name]
+          additionalProperties: false
 
+        members:
+          type: object
+          $group_chat_id:
+            type: object
+            properties:
+              ~$username: 
+                type: boolean
+
+        messages:
+          type: object
+          $group_chat_id:
+            type: object
+            properties:
+              $message_id:
+                type: object
+                properties:
+                  created_at:
+                    type: string
+                  location:
+                    $ref: "#/definitions/location"
+                  text:
+                    type: string
+                  username:
+                    type: string
+                    constraint: isUser(next.val())
+          required: [created_at, location, text, username]
+          additionalProperties: false
+          
   additionalProperties: false
 
 access:
@@ -193,3 +241,21 @@ access:
   # Any logged in user can write usernames
   - location: /usernames/
     write:    isLoggedIn()
+
+  # Only logged in users can read group_chats
+  - location: /group_chats/
+    read:     isLoggedIn()
+
+  # Only logged in users can write group_chats
+  - location: /group_chats/
+    write:    isLoggedIn()
+
+  # only auth'd users can write the geo statuses
+  # (anyone can read)
+  - location: /geo_statuses/
+    write:    isLoggedIn()
+
+  # users can only modify their own geo statuses
+  - location: /geo_statuses/$status_id/
+    write: postedByUser($status_id)
+
