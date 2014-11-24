@@ -11,6 +11,7 @@ functions:                      #reusable boolean functions
   - postedByFriend(status_id):  isFriend( root['statuses/'+status_id+'/username'].val() )
   - postedByUser(status_id):    isUser( root['statuses/'+status_id+'/username'].val() )
   - checkReply(status_id):      (status_id == null) || postedByFriend(status_id) || postedByUser(status_id)
+  - isReasonableString(data):   (data.isString() && data.val().length < 1000)
 
 schema:
   # DEFINITIONS USED FOR REPEATED DATA SCHEMAS
@@ -106,7 +107,7 @@ schema:
             constraint: createOnly()
           text:
             type: string
-            constraint: createOnly()
+            constraint: createOnly() && isReasonableString()
           username:
             type: string
             # Only Create Statuses For Logged In User and
@@ -185,7 +186,7 @@ schema:
                     type: string
                   username:
                     type: string
-                    constraint: isUser(next.val())
+                    constraint: isUser(next.val()) 
           required: [created_at, location, text, username]
           additionalProperties: false
           
