@@ -20,16 +20,16 @@ var getUserIdFromUsername = function(username, callback) {
     .once('value', function (snap) {
         var userId = snap.val();
         callback(userId);
-    }
-}
+    });
+};
 
 var getUsernameFromUserId = function(userId, callback) {
     ref.child('users/' + userId + 'public_profile/username')
     .once('value', function (snap) {
         var username = snap.val();
         callback(username);
-    }
-}
+    });
+};
 
 var listenForNewMessagesAndSendNotifications = function () {
     ref.child('statuses')
@@ -45,7 +45,7 @@ var listenForNewMessagesAndSendNotifications = function () {
                 username = username.substring(1, username.length-1);
                 getUserIdFromUsername(username, function (userId) {
                     addMentionNotificationToDb(status, userId);
-                }
+                });
             }
         }
     });
@@ -106,7 +106,7 @@ var configureMentionPushNote = function (status) {
         var note = new apn.Notification();
         note.alert = '@' + username + ' mentioned you in a status';
         return note;
-    };
+    });
 };
 
 var startFeedbackChecker = function () {

@@ -16,13 +16,18 @@ var listenForNewUsersAndSyncFriends = function () {
     .on('child_added', function (snap) {
         // When New User Signs Up, Query Facebook For other friends who use the app.
         var userId = snap.name();
+        console.log("detected new userId (syncing friends): ", userId);
         getFacebookAuthFromUserId(userId, function(facebook_auth) {
             ref.child('user_mappings/facebook/'+facebook_auth)
             .once('value', function (snap) {
-                var accessToken = snap.val().accessToken;
-                var fbUserId = snap.val().id;
-                if (accessToken && fbUserId) {
-                    getUserFriends(accessToken, fbUserId);
+                try {
+                    var accessToken = snap.val().accessToken;
+                    var fbUserId = snap.val().id;
+                    if (accessToken && fbUserId) {
+                        getUserFriends(accessToken, fbUserId);
+                    }
+                } catch (err) {
+                    console.log("failed to sync friends for: ", userId);
                 }
             });
         });
@@ -66,7 +71,7 @@ var getUserFriends = function (accessToken, fbUserId) {
 var syncUserFriends = function (fbUserId, friends) {
     // Find Username for new user
     getUserIdFromFbUserId(fbUserId, function (rootUserId) {
-        console.log('Syncing Friends For '+rootUserIrd);
+        console.log('Syncing Friends For '+rootUserId);
         // For each friend get username by fbUserId
         for (var i = 0; i < friends.length; i++) {
             var friendFbUserId = friends[i].id;
@@ -88,7 +93,7 @@ var getUserIdFromFbUserId = function (fbUserId, callback) {
     });
 };
 
-var getFacebookAuthFromId = function(userId, callback) {
+var getFacebookAuthFromUserId = function(userId, callback) {
     ref.child('users/'+userId+'/facebook_auth')
     .once('value', function (snap) {
         callback(snap.val());
