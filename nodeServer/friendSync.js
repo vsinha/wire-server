@@ -12,11 +12,11 @@ var start = function () {
 
 var listenForNewUsersAndSyncFriends = function () {
     // Listen For New Users
-    ref.child('usernames')
+    ref.child('users')
     .on('child_added', function (snap) {
         // When New User Signs Up, Query Facebook For other friends who use the app.
-        var username = snap.name();
-        getFacebookAuthFromUsername(username, function(facebook_auth) {
+        var userId = snap.name();
+        getFacebookAuthFromUserId(userId, function(facebook_auth) {
             ref.child('user_mappings/facebook/'+facebook_auth)
             .once('value', function (snap) {
                 var accessToken = snap.val().accessToken;
@@ -65,38 +65,38 @@ var getUserFriends = function (accessToken, fbUserId) {
 
 var syncUserFriends = function (fbUserId, friends) {
     // Find Username for new user
-    getUserNameFromFbUserId(fbUserId, function (rootUsername) {
-        console.log('Syncing Friends For '+rootUsername);
+    getUserIdFromFbUserId(fbUserId, function (rootUserId) {
+        console.log('Syncing Friends For '+rootUserIrd);
         // For each friend get username by fbUserId
         for (var i = 0; i < friends.length; i++) {
             var friendFbUserId = friends[i].id;
-            getUserNameFromFbUserId(friendFbUserId, function (friendUsername) {
+            getUserIdFromFbUserId(friendFbUserId, function (friendUserId) {
                 // Add each user to eachothers friends
-                addFriendFromUsername(rootUsername, friendUsername);
-                addFriendFromUsername(friendUsername, rootUsername);
+                addFriendFromUserId(rootUserId, friendUserId);
+                addFriendFromUserId(friendUserId, rootUserId);
             });
         };
     });
 };
 
-var getUserNameFromFbUserId = function (fbUserId, callback) {
+var getUserIdFromFbUserId = function (fbUserId, callback) {
     ref.child('user_mappings/facebook/facebook:'+fbUserId)
     .once('value', function (snap) {
         if (snap.val()) {
-            callback(snap.val().username);
+            callback(snap.val().user_id);
         }
     });
 };
 
-var getFacebookAuthFromUsername = function(username, callback) {
-    ref.child('users/'+username+'/facebook_auth')
+var getFacebookAuthFromId = function(userId, callback) {
+    ref.child('users/'+userId+'/facebook_auth')
     .once('value', function (snap) {
         callback(snap.val());
     });
 };
 
-var addFriendFromUsername = function (username, friendUsername) {
-    ref.child('users/'+username+'/friends/'+friendUsername)
+var addFriendFromUserId = function (userId, friendUserId) {
+    ref.child('users/'+userId+'/friends/'+friendUserId)
     .set(true);
 };
 
