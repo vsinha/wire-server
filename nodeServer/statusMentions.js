@@ -42,6 +42,7 @@ var listenForNewMessagesAndSendNotifications = function () {
         if (usernames) {
             for (var i = 0; i < usernames.length; i++) {
                 var username = usernames[i];
+                console.log("found mention of ", usenames);
                 username = username.substring(1, username.length-1);
                 getUserIdFromUsername(username, function (userId) {
                     addMentionNotificationToDb(status, userId);
@@ -104,6 +105,7 @@ var deviceFromTokenString = function (deviceToken) {
 var configureMentionPushNote = function (status) {
     getUsernameFromUserID(status.userId, function(username) {
         var note = new apn.Notification();
+        console.log('@' + username + ' mentioned you in a status');
         note.alert = '@' + username + ' mentioned you in a status';
         return note;
     });
