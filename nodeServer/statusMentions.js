@@ -15,6 +15,22 @@ var start = function () {
     listenForNewMessagesAndSendNotifications();
 };
 
+var getUserIdFromUsername = function(username, callback) {
+    ref.child('usernames/' + username)
+    .once('value', function (snap) {
+        var userId = snap.val();
+        callback(userId);
+    });
+};
+
+var getUsernameFromUserId = function(userId, callback) {
+    ref.child('users/' + userId + 'public_profile/username')
+    .once('value', function (snap) {
+        var username = snap.val();
+        callback(username);
+    });
+};
+
 var listenForNewMessagesAndSendNotifications = function () {
     ref.child('statuses')
     .on('child_added', function (snap) {
@@ -26,43 +42,47 @@ var listenForNewMessagesAndSendNotifications = function () {
         if (usernames) {
             for (var i = 0; i < usernames.length; i++) {
                 var username = usernames[i];
+                console.log("found mention of ", usernames);
                 username = username.substring(1, username.length-1);
-                addMentionNotificationToDb(status, username);
+                getUserIdFromUsername(username, function (userId) {
+                    addMentionNotificationToDb(status, userId);
+                });
             }
         }
     });
 };
 
-var addMentionNotificationToDb = function (status, username) {
+var addMentionNotificationToDb = function (status, userId) {
     // Check If A Notification Has Already Been Created 
     // For the Status And the Username mentioned
-    var statusUsernameKey = status.id+':'+username;
-    ref.child('mentionNotifications/'+statusUsernameKey)
+    var statusUserIdKey = status.id+':'+userId;
+    ref.child('mention_notifications/'+statusUserIdKey)
     .once('value', function (snap) {
         if ( !snap.val() ) {
             // Add Notification
             var notification = {
                 type: 'mention',
                 status: status.id,
-                username: username
+                user_id: userId
             };
+
             var pushRef = ref.child('notifications').push(notification);
             var notificationId = pushRef.name();
 
             // Add Index To users/username/notifications
-            ref.child('users/'+username+'/notifications/'+notificationId).set(true);
+            ref.child('users/'+userId+'/notifications/'+notificationId).set(true);
 
             // Send Push
-            sendPushNotification(status, username);
+            sendPushNotification(status, userId);
 
             // Add Notification Index
-            ref.child('mentionNotifications/'+statusUsernameKey).set(true);
+            ref.child('mention_notifications/'+statusUserIdKey).set(true);
         }
     });
 };
 
-var sendPushNotification = function (status, username) {
-    ref.child('users/' + username + '/installation')
+var sendPushNotification = function (status, userId) {
+    ref.child('users/' + userId + '/installation')
     .once('value', function (snap) {
         var installation = snap.val();
         if (installation) {
@@ -83,10 +103,12 @@ var deviceFromTokenString = function (deviceToken) {
 };
 
 var configureMentionPushNote = function (status) {
-    var note = new apn.Notification();
-    note.alert = '@' + status.username + ' mentioned you in a status';
-
-    return note;
+    getUsernameFromUserID(status.userId, function(username) {
+        var note = new apn.Notification();
+        console.log('@' + username + ' mentioned you in a status');
+        note.alert = '@' + username + ' mentioned you in a status';
+        return note;
+    });
 };
 
 var startFeedbackChecker = function () {
