@@ -126,6 +126,26 @@ schema:
         required: [created_at, location, text, user_id]
         additionalProperties: false
 
+    geo_statuses:
+        type: object
+        $status_id:
+            type: object
+            properties:
+                g:
+                    type: string
+                l:
+                    type: object
+                    properties:
+                        0:
+                            type: string
+                        1:
+                            type: string
+                    required: ['0', '1']
+                    additionalProperties: false
+            required: [g, l]
+            additionalProperties: false
+
+
     #notifications object
     notifications:
       type: object
@@ -162,8 +182,8 @@ schema:
                 type: string
               last_activity:
                 type: string
-          required: [created_at, created_by, group_name]
-          additionalProperties: false
+            required: [created_at, created_by, group_name]
+            additionalProperties: false
 
         members:
           type: object
@@ -190,8 +210,8 @@ schema:
                   user_id:
                     type: string
                     constraint: isUser(next.val())
-          required: [created_at, location, text, user_id]
-          additionalProperties: false
+                required: [created_at, location, text, user_id]
+                additionalProperties: false
           
   additionalProperties: false
 
@@ -262,4 +282,8 @@ access:
   # users can only modify their own geo statuses
   - location: /geo_statuses/$status_id/
     write: postedByUser($status_id)
+
+  # anyone logged in can read geo statuses
+  - location: /geo_statuses/
+    read:     isLoggedIn()
 
