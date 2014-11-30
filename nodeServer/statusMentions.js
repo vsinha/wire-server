@@ -7,10 +7,14 @@ var serverType = process.argv[2] || 'dev';
 switch (serverType) {
   case 'dev':
     var options = {
+        certFile: "certificates/devCert.pem",
+        keyFile: "certificates/devKey.pem",
         production: false
     };
   case 'prod':
     var options = {
+        certFile: "certificates/prodCert.pem",
+        keyFile: "certificates/prodKey.pem",
         production: true
     };
 }
@@ -44,8 +48,6 @@ var listenForNewMessagesAndSendNotifications = function () {
     .on('child_added', function (snap) {
         var status = snap.val();
         status.id = snap.name();
-
-        console.log("new status: ", status);
 
         var regex = /@.*?\s/;
         var usernames = status.text.match(regex);
