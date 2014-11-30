@@ -2,10 +2,18 @@
 // var ref = new Firebase('https://vivid-torch-3032.firebaseio.com/');
 
 var apn = require('apn');
-var options = {
-    production: false
-};
 
+var serverType = process.argv[2] || 'dev';
+switch (serverType) {
+  case 'dev':
+    var options = {
+        production: false
+    };
+  case 'prod':
+    var options = {
+        production: true
+    };
+}
 var apnConnection = new apn.Connection(options);
 
 var ref;
