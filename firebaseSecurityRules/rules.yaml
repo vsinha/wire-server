@@ -5,7 +5,7 @@ functions:                      #reusable boolean functions
   - createOnly():               next.exists() && !prev.exists()
   - deleteOnly():               prev.exists() && !next.exists()
   - createOrDelete():           createOnly() || deleteOnly()
-  - isUser(user_id):           user_id === root['user_mappings/'+auth.provider+'/'+auth.uid+'/user_id']
+  - isUser(user_id):           user_id === root['user_mappings/'+auth.provider+'/'+auth.uid+'/user_id'].val()
   - isFriend(user_id):         root['users/'+user_id+'/friends/'+( root['user_mappings/'+auth.provider+'/'+auth.uid+'/user_id'].val() )].exists()
   - hasUser_id():              root['user_mappings/'+auth.provider+'/'+auth.uid+'/user_id'].exists()
   - postedByFriend(status_id):  isFriend( root['statuses/'+status_id+'/user_id'].val() )
@@ -137,9 +137,9 @@ schema:
                     type: object
                     properties:
                         0:
-                            type: string
+                            type: number
                         1:
-                            type: string
+                            type: number
                     required: ['0', '1']
                     additionalProperties: false
             required: [g, l]
@@ -247,12 +247,9 @@ access:
   - location: /notifications/$notification_id/
     read:     isUser(prev.user_id.val())
 
-  # User Can Read All Friends' Statuses And Their Own Statuses
-  # Can not read statuses of friends that have
-  # replied to someone who is not your friend
-  - location: /statuses/$status_id/
-    read:     ( isFriend(prev.user_id.val()) && checkReply(prev.in_reply_to.val()) )
-              || isUser(prev.user_id.val())
+  # Logged In Users Can read statuses
+  - location: /statuses/
+    read:    isLoggedIn()
 
   # Logged In Users Can Write to statuses
   - location: /statuses/
