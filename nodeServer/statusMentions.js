@@ -45,6 +45,8 @@ var listenForNewMessagesAndSendNotifications = function () {
         var status = snap.val();
         status.id = snap.name();
 
+        console.log("new status: ", status);
+
         var regex = /@.*?\s/;
         var usernames = status.text.match(regex);
         if (usernames) {
