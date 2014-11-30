@@ -42,7 +42,7 @@ var listenForNewMessagesAndSendNotifications = function () {
         if (usernames) {
             for (var i = 0; i < usernames.length; i++) {
                 var username = usernames[i];
-                console.log("found mention of ", usenames);
+                console.log("found mention of ", usernames);
                 username = username.substring(1, username.length-1);
                 getUserIdFromUsername(username, function (userId) {
                     addMentionNotificationToDb(status, userId);
