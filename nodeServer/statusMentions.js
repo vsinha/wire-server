@@ -7,16 +7,18 @@ var serverType = process.argv[2] || 'dev';
 switch (serverType) {
   case 'dev':
     var options = {
-        certFile: "certificates/devCert.pem",
-        keyFile: "certificates/devKey.pem",
+        cert: "certificates/devCert.pem",
+        key: "certificates/devKey.pem",
         production: false
     };
+    break;
   case 'prod':
     var options = {
-        certFile: "certificates/prodCert.pem",
-        keyFile: "certificates/prodKey.pem",
+        cert: "certificates/prodCert.pem",
+        key: "certificates/prodKey.pem",
         production: true
     };
+    break;
 }
 var apnConnection = new apn.Connection(options);
 
@@ -36,7 +38,7 @@ var getUserIdFromUsername = function(username, callback) {
 };
 
 var getUsernameFromUserId = function(userId, callback) {
-    ref.child('users/' + userId + 'public_profile/username')
+    ref.child('users/' + userId + '/public_profile/username')
     .once('value', function (snap) {
         var username = snap.val();
         callback(username);
@@ -54,7 +56,7 @@ var listenForNewMessagesAndSendNotifications = function () {
         if (usernames) {
             for (var i = 0; i < usernames.length; i++) {
                 var username = usernames[i];
-                console.log("found mention of ", usernames);
+                console.log("found mention of ", username);
                 username = username.substring(1, username.length-1);
                 getUserIdFromUsername(username, function (userId) {
                     addMentionNotificationToDb(status, userId);
@@ -98,10 +100,13 @@ var sendPushNotification = function (status, userId) {
     .once('value', function (snap) {
         var installation = snap.val();
         if (installation) {
-            if (installation.deviceToken) {
-                var device = deviceFromTokenString(installation.deviceToken);
-                var note = configureMentionPushNote(status);
-                apnConnection.pushNotification(note, device);
+            if (installation.device_token) {
+                var device = deviceFromTokenString(installation.device_token);
+                
+                getUsernameFromUserId(status.user_id, function (username) {
+                  var note = configureMentionPushNote(username);
+                  apnConnection.pushNotification(note, device);
+                })
             }
         }
     });
@@ -114,13 +119,12 @@ var deviceFromTokenString = function (deviceToken) {
     return device;
 };
 
-var configureMentionPushNote = function (status) {
-    getUsernameFromUserID(status.userId, function(username) {
-        var note = new apn.Notification();
-        console.log('@' + username + ' mentioned you in a status');
-        note.alert = '@' + username + ' mentioned you in a status';
-        return note;
-    });
+var configureMentionPushNote = function (username) {
+      var note = new apn.Notification();
+      console.log('sending push notification: @' 
+          + username + ' mentioned you in a status');
+      note.alert = '@' + username +' mentioned you in a status';
+      return note;
 };
 
 var startFeedbackChecker = function () {
@@ -134,7 +138,7 @@ var startFeedbackChecker = function () {
     feedback.on("feedback", function(devices) {
         devices.forEach(function(item) {
             // Do something with item.device and item.time;
-            console.log(item);
+            console.log('feedback', item);
         });
     });
 };
