@@ -1,6 +1,3 @@
-// var Firebase = require('firebase');
-// var ref = new Firebase('https://vivid-torch-3032.firebaseio.com/');
-
 var apn = require('apn');
 
 var serverType = process.argv[2] || 'dev';
@@ -24,7 +21,7 @@ var apnConnection = new apn.Connection(options);
 
 var ref;
 var start = function () {
-    console.log('Starting Push Server');
+    console.log('Starting Status Mentions Push Server');
     ref = require('./myFirebase').adminRef;
     listenForNewMessagesAndSendNotifications();
 };
@@ -106,7 +103,7 @@ var sendPushNotification = function (status, userId) {
                 getUsernameFromUserId(status.user_id, function (username) {
                   var note = configureMentionPushNote(username);
                   apnConnection.pushNotification(note, device);
-                })
+                });
             }
         }
     });
