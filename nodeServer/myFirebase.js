@@ -1,6 +1,5 @@
 var Firebase = require('firebase');
 
-
 var serverType = process.argv[2] || 'dev';
 
 switch (serverType) {
