@@ -38,7 +38,7 @@ var addStatusLikeNotificationToFirebase = function (statusId, likeUserId) {
             sendApplePushNotification(notification);
 
             // Set status_likes index to sent
-            setStatusLikesIndex(statusId, likeUserId, "push_sent");
+            setStatusLikesIndex(statusId, likeUserId, "true");
         });
     } else {
         console.log("Error in addStatusLikeNotificationToFirebase(): Missing Info");
@@ -88,6 +88,13 @@ var sendApplePushNotification = function (notification) {
             });
         }
     });
+};
+
+var configureStatusLikePushNote = function (name) {
+      var note = new apn.Notification();
+      console.log('sending push notification: ' + name + ' liked your status');
+      note.alert = name +' liked your status';
+      return note;
 };
 
 var getNameFromUserId = function(userId, callback) {

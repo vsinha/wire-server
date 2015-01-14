@@ -58,7 +58,7 @@ var addMentionNotificationToDb = function (status, userId) {
             // Add Notification
             var notification = {
                 type: 'mention',
-                status: status.id,
+                status_id: status.id,
                 user_id: userId
             };
 
