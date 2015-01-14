@@ -34,8 +34,6 @@ var listenForNewUsersAndSyncFriends = function () {
     });
 };
 
-
-
 var getUserFriends = function (accessToken, fbUserId) {
     var params = {
         access_token: accessToken,
@@ -51,22 +49,6 @@ var getUserFriends = function (accessToken, fbUserId) {
     });
 };
 
-// Sample Response From FB Graph /fbUserId/friends
-// {
-//     data: [{
-//         name: 'Donna Shepardsky',
-//         id: '289302101261550'
-//     }, {
-//         name: 'Elizabeth Schrocksky',
-//         id: '1535015630066740'
-//     }],
-//     paging: {
-//         next: 'https://graph.facebook.com/v2.1/1484710011804756/friends?access_token=CAAU2ChfKMTABAADh7aBLtRIlZBM2BBHJz3Lsp0tMXZCtNypkTfOkox4N4QJcF2fN8whdHaPhpCyEcsMlOGj0y7I9blaxOP7AgIDDBXag8mZBdbb7BZAd9mCarmzAZAlsX8u1ZBbkHRZBu5BrmvmVOq3DYmJgXdChJbjNK10NOy2Tt3LNNDWLYlCh5FfnLskYj3ZBDeZBksXlujZCJMxN6PLKmcGd4DLMdsa5wZD&limit=5000&offset=5000&__after_id=enc_AezXJPfaT2ZLDxsdWxpQh5ebZkO1AqqrBtiouxpDGnaqvY5f2YSvB7gntHSoDj3A2tj_eAFBquawXfCRcKiuQ8LY'
-//     },
-//     summary: {
-//         total_count: 2
-//     }
-// }
 
 var syncUserFriends = function (fbUserId, friends) {
     // Find Username for new user
@@ -106,3 +88,20 @@ var addFriendFromUserId = function (userId, friendUserId) {
 };
 
 module.exports.start = start;
+
+// Sample Response From FB Graph /fbUserId/friends
+// {
+//     data: [{
+//         name: 'Donna Shepardsky',
+//         id: '289302101261550'
+//     }, {
+//         name: 'Elizabeth Schrocksky',
+//         id: '1535015630066740'
+//     }],
+//     paging: {
+//         next: 'https://graph.facebook.com/v2.1/1484710011804756/friends?access_token=CAAU2ChfKMTABAADh7aBLtRIlZBM2BBHJz3Lsp0tMXZCtNypkTfOkox4N4QJcF2fN8whdHaPhpCyEcsMlOGj0y7I9blaxOP7AgIDDBXag8mZBdbb7BZAd9mCarmzAZAlsX8u1ZBbkHRZBu5BrmvmVOq3DYmJgXdChJbjNK10NOy2Tt3LNNDWLYlCh5FfnLskYj3ZBDeZBksXlujZCJMxN6PLKmcGd4DLMdsa5wZD&limit=5000&offset=5000&__after_id=enc_AezXJPfaT2ZLDxsdWxpQh5ebZkO1AqqrBtiouxpDGnaqvY5f2YSvB7gntHSoDj3A2tj_eAFBquawXfCRcKiuQ8LY'
+//     },
+//     summary: {
+//         total_count: 2
+//     }
+// }

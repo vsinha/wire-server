@@ -42,12 +42,16 @@ var addStatusLikeNotificationToFirebase = function (statusId, likeUserId) {
     if (statusId && likeUserId) {
         // Get Status Content
         getStatusFromId(statusId, function (status) {
+
             // Create Notification Object
             var notification = createNotificationObject(status, likeUserId);
+
             // Save Notification To Firebase
             saveNotificationToFirebase(notification);
+
             // Send Apple Push Notification
             sendApplePushNotification(notification);
+
             // Set status_likes index to sent
             setStatusLikesIndex(statusId, likeUserId, "push_sent");
         });
@@ -90,15 +94,13 @@ var sendApplePushNotification = function (notification) {
     ref.child('users/' + notification.user_id + '/installation')
     .once('value', function (snap) {
         var installation = snap.val();
-        if (installation) {
-            if (installation.device_token) {
+        if (installation && installation.device_token) {
+            getNameFromUserId(notification.like_user_id, function (name) {
+                var note = configureStatusLikePushNote(name);
                 var device = deviceFromTokenString(installation.device_token);
-                
-                getNameFromUserId(notification.like_user_id, function (name) {
-                    var note = configureStatusLikePushNote(name);
-                    apnConnection.pushNotification(note, device);
-                });
-            }
+
+                apnConnection.pushNotification(note, device);
+            });
         }
     });
 };
