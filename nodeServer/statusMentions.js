@@ -1,28 +1,13 @@
 var apn = require('apn');
 
-var serverType = process.argv[2] || 'dev';
-switch (serverType) {
-  case 'dev':
-    var options = {
-        cert: "certificates/devCert.pem",
-        key: "certificates/devKey.pem",
-        production: false
-    };
-    break;
-  case 'prod':
-    var options = {
-        cert: "certificates/prodCert.pem",
-        key: "certificates/prodKey.pem",
-        production: true
-    };
-    break;
-}
-var apnConnection = new apn.Connection(options);
-
 var ref;
+var apnConnection;
 var start = function () {
     console.log('Starting Status Mentions Push Server');
+
     ref = require('./myFirebase').adminRef;
+    apnConnection = require('./apnServices').apnConnection;
+
     listenForNewMessagesAndSendNotifications();
 };
 
