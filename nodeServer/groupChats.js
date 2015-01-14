@@ -20,26 +20,30 @@ var listenForGroupCreationAndSendNotifications = function() {
         var groupName = snap.val().name;
         console.log('group created: ', groupId);
 
-        watchForNewMemberFromGroupId(groupId, function(newlyAddedUserId) {
-            // send a notification to the added member
-            // if (newlyAddedUserId != groupCreatorId) {
-                var notification = {
-                    key: groupId + ':' + newlyAddedUserId,
-                    type: "notification_added_to_group",
-                    group_id: groupId,
-                    user_id: newlyAddedUserId,
-                    created_at: Date.now()
-                }
+        if (!snap.val().expired) {
+            watchForNewMemberFromGroupId(groupId, function(newlyAddedUserId) {
+                // send a notification to the added member
+                // if (newlyAddedUserId != groupCreatorId) {
+                    var notification = {
+                        key: groupId + ':' + newlyAddedUserId,
+                        type: "notification_added_to_group",
+                        group_id: groupId,
+                        user_id: newlyAddedUserId,
+                        created_at: Date.now()
+                    }
 
-                // create note and send push
-                getNameFromUserId(groupCreatorId, function(creatorName) {
-                    var pushNote = configureGroupAddPushNote(creatorName, groupName);
-                    apnServices.addNotificationToFirebaseAndSendPush(notification, pushNote
-                        function() {}
-                    );
-                });
-            //}
-        });
+                    // create note and send push
+                    getNameFromUserId(groupCreatorId, function(creatorName) {
+                        var pushNote = configureGroupAddPushNote(creatorName, groupName);
+                        apnServices.addNotificationToFirebaseAndSendPush(notification, pushNote
+                            function() {}
+                        );
+                    });
+                //}
+            });
+        } else { 
+            console.log("group " + groupName + " is expired");
+        }
     });
 };
 
