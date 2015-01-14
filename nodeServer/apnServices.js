@@ -21,7 +21,56 @@ switch (serverType) {
         break;
 }
 
-// init apn connection and export
+// init apn connection 
 var apnConnection = new apn.Connection(options);
 
-module.exports.apnConnection = apnConnection
+var addNotificationToFirebase = function(notification, callback) {
+    // check if the notification has already been created
+    ref.child(notification.type + '/' + notification.key).once('value', function(snap) {
+        if (!snap.val()) {
+            // add the notification
+            var pushRef = ref.child('notifications').push(notification);
+            var notificationId = pushRef.name();
+
+            // add index to the user's notifications
+            ref.child('users/' + notification.user_id + '/notifications/' + notificationId).set(true);
+        }
+    });
+}
+
+var sendPushNotificationToUserId = function (userId, pushNote, successCallback) {
+    ref.child('users/' + userId + '/installation')
+    .once('value', function (snap) {
+        var installation = snap.val();
+        if (installation && installation.device_token) {
+            var device = deviceFromTokenString(installation.device_token);
+            apnConnection.pushNotification(pushNote, device);
+            successCallback();
+        }
+    });
+};
+
+var deviceFromTokenString = function (deviceToken) {
+    var b64token = deviceToken;
+    var buf = new Buffer(b64token, 'base64');
+    var device = new apn.Device(buf);
+    return device;
+};
+
+var addNotificationToFirebaseAndSendPush = function(notification, pushNote, callback) {
+    addNotificationToFirebase(notification);
+
+    sendPushNotificationToUserId(notification.user_id, pushNote, function() {
+        // execute this on success
+
+        // TODO: standardize the notification.key so we can just 
+        // use this for flagging sent notifications:
+        //ref.child(notification.type + '/' + notification.key).set(true);
+
+        callback();
+    });
+};
+
+module.exports.apnConnection = apnConnection;
+module.exports.addNotificationToFirebaseAndSendPush = addNotificationToFirebaseAndSendPush;
+

@@ -1,14 +1,54 @@
 var apn = require('apn');
+var apnServices = require('./apnServices');
 
 var ref;
-var apnConnection;
 var start = function () {
     console.log('Starting Status Mentions Push Server');
-
     ref = require('./myFirebase').adminRef;
-    apnConnection = require('./apnServices').apnConnection;
-
     listenForNewMessagesAndSendNotifications();
+};
+
+var listenForNewMessagesAndSendNotifications = function () {
+    ref.child('statuses')
+    .on('child_added', function (snap) {
+        var status = snap.val();
+        status.id = snap.name();
+
+        var regex = /@.*?\s/;
+        var usernames = status.text.match(regex);
+        if (usernames) {
+            for (var i = 0; i < usernames.length; i++) {
+                var username = usernames[i];
+                console.log("found mention of ", username);
+                username = username.substring(1, username.length-1);
+
+                getUserIdFromUsername(username, function (userId) {
+                    var notification = {
+                        key: status.id + ':' + userId,
+                        type: 'notification_mention',
+                        status_id: status.id,
+                        user_id: userId,
+                        created_at: Date.now()
+                    };
+
+                    var pushNote = configureMentionPushNote(username);
+                    apnServices.addNotificationToFirebaseAndSendPush(notification, pushNote, 
+                        function() {
+                          ref.child('mention_notifications/'+statusUserIdKey).set(true);
+                        }
+                    );
+                });
+            }
+        }
+    });
+};
+
+var configureMentionPushNote = function (username) {
+      var note = new apn.Notification();
+      console.log('sending push notification: @' 
+          + username + ' mentioned you in a status');
+      note.alert = '@' + username +' mentioned you in a status';
+      return note;
 };
 
 var getUserIdFromUsername = function(username, callback) {
@@ -27,88 +67,6 @@ var getUsernameFromUserId = function(userId, callback) {
     });
 };
 
-var listenForNewMessagesAndSendNotifications = function () {
-    ref.child('statuses')
-    .on('child_added', function (snap) {
-        var status = snap.val();
-        status.id = snap.name();
-
-        var regex = /@.*?\s/;
-        var usernames = status.text.match(regex);
-        if (usernames) {
-            for (var i = 0; i < usernames.length; i++) {
-                var username = usernames[i];
-                console.log("found mention of ", username);
-                username = username.substring(1, username.length-1);
-                getUserIdFromUsername(username, function (userId) {
-                    addMentionNotificationToDb(status, userId);
-                });
-            }
-        }
-    });
-};
-
-var addMentionNotificationToDb = function (status, userId) {
-    // Check If A Notification Has Already Been Created 
-    // For the Status And the Username mentioned
-    var statusUserIdKey = status.id+':'+userId;
-    ref.child('mention_notifications/'+statusUserIdKey)
-    .once('value', function (snap) {
-        if ( !snap.val() ) {
-            // Add Notification
-            var notification = {
-                type: 'mention',
-                status_id: status.id,
-                user_id: userId
-            };
-
-            var pushRef = ref.child('notifications').push(notification);
-            var notificationId = pushRef.name();
-
-            // Add Index To users/username/notifications
-            ref.child('users/'+userId+'/notifications/'+notificationId).set(true);
-
-            // Send Push
-            sendPushNotification(status, userId);
-
-            // Add Notification Index
-            ref.child('mention_notifications/'+statusUserIdKey).set(true);
-        }
-    });
-};
-
-var sendPushNotification = function (status, userId) {
-    ref.child('users/' + userId + '/installation')
-    .once('value', function (snap) {
-        var installation = snap.val();
-        if (installation) {
-            if (installation.device_token) {
-                var device = deviceFromTokenString(installation.device_token);
-                
-                getUsernameFromUserId(status.user_id, function (username) {
-                  var note = configureMentionPushNote(username);
-                  apnConnection.pushNotification(note, device);
-                });
-            }
-        }
-    });
-};
-
-var deviceFromTokenString = function (deviceToken) {
-    var b64token = deviceToken;
-    var buf = new Buffer(b64token, 'base64');
-    var device = new apn.Device(buf);
-    return device;
-};
-
-var configureMentionPushNote = function (username) {
-      var note = new apn.Notification();
-      console.log('sending push notification: @' 
-          + username + ' mentioned you in a status');
-      note.alert = '@' + username +' mentioned you in a status';
-      return note;
-};
-
 var startFeedbackChecker = function () {
     // Set Up Apple Push Feedback Logger
     var feedbackOptions = {
@@ -124,7 +82,6 @@ var startFeedbackChecker = function () {
         });
     });
 };
-
 
 module.exports.start = start;
 module.exports.startFeedback = startFeedbackChecker;
