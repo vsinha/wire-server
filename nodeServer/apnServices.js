@@ -45,7 +45,16 @@ var sendPushNotificationToUserId = function (userId, pushNote, successCallback) 
         var installation = snap.val();
         if (installation && installation.device_token) {
             var device = deviceFromTokenString(installation.device_token);
-            apnConnection.pushNotification(pushNote, device);
+            // debugging, only send notifications if the user ID is viraj's
+            if (userId == "-JccFAFEKQNxc2bZNqXO") {
+                console.log("sending notification to viraj");
+                apnConnection.pushNotification(pushNote, device);
+            } else if ( userId == "-JccAtC2cCeH2zzc_sdP") {
+                console.log("sending notification to andrew");
+                apnConnection.pushNotification(pushNote, device);
+            } else {
+                console.log("not sending notification to userId " + userId);
+            }
             successCallback();
         }
     });
