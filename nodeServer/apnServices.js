@@ -23,10 +23,11 @@ switch (serverType) {
 
 // init apn connection 
 var apnConnection = new apn.Connection(options);
+var ref;
 
 var addNotificationToFirebase = function(notification, callback) {
     // check if the notification has already been created
-    ref.child(notification.type + '/' + notification.key).once('value', function(snap) {
+    ref.child("notification_receipts/" + notification.type + '/' + notification.key).once('value', function(snap) {
         if (!snap.val()) {
             // add the notification
             var pushRef = ref.child('notifications').push(notification);
@@ -58,14 +59,15 @@ var deviceFromTokenString = function (deviceToken) {
 };
 
 var addNotificationToFirebaseAndSendPush = function(notification, pushNote, callback) {
+    console.log("adding notificaton to firebase and pushing");
+    ref = require('./myFirebase').adminRef;
     addNotificationToFirebase(notification);
 
     sendPushNotificationToUserId(notification.user_id, pushNote, function() {
         // execute this on success
 
-        // TODO: standardize the notification.key so we can just 
         // use this for flagging sent notifications:
-        //ref.child(notification.type + '/' + notification.key).set(true);
+        ref.child("notification_receipts/" + notification.type + '/' + notification.key).set(true);
 
         callback();
     });
