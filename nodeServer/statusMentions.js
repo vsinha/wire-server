@@ -43,8 +43,6 @@ var listenForNewMessagesAndSendNotifications = function () {
 
 var configureMentionPushNote = function (username) {
       var note = new apn.Notification();
-      console.log('sending push notification: @' 
-          + username + ' mentioned you in a status');
       note.alert = '@' + username +' mentioned you in a status';
       return note;
 };

@@ -44,17 +44,9 @@ var sendPushNotificationToUserId = function (userId, pushNote, successCallback) 
     .once('value', function (snap) {
         var installation = snap.val();
         if (installation && installation.device_token) {
+            console.log("sending push notification to " + userId + ": " + pushNote.alert);
             var device = deviceFromTokenString(installation.device_token);
-            // debugging, only send notifications if the user ID is viraj's
-            if (userId == "-JccFAFEKQNxc2bZNqXO") {
-                console.log("sending notification to viraj");
-                apnConnection.pushNotification(pushNote, device);
-            } else if ( userId == "-JccAtC2cCeH2zzc_sdP") {
-                console.log("sending notification to andrew");
-                apnConnection.pushNotification(pushNote, device);
-            } else {
-                console.log("not sending notification to userId " + userId);
-            }
+            apnConnection.pushNotification(pushNote, device);
             successCallback();
         }
     });
@@ -68,7 +60,6 @@ var deviceFromTokenString = function (deviceToken) {
 };
 
 var addNotificationToFirebaseAndSendPush = function(notification, pushNote, callback) {
-    console.log("adding notificaton to firebase and pushing");
     ref = require('./myFirebase').adminRef;
     addNotificationToFirebase(notification);
 

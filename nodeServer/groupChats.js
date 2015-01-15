@@ -18,12 +18,12 @@ var listenForGroupCreationAndSendNotifications = function() {
         var groupId = snap.name();
         var groupCreatorId = snap.val().created_by;
         var groupName = snap.val().name;
-        console.log('group created: ', groupId);
 
         if (!snap.val().expired) {
+            console.log("watching group: " + groupName);
             watchForNewMemberFromGroupId(groupId, function(newlyAddedUserId) {
                 // send a notification to the added member
-                // if (newlyAddedUserId != groupCreatorId) {
+                if (newlyAddedUserId != groupCreatorId) {
                     var notification = {
                         key: groupId + ':' + newlyAddedUserId,
                         type: "added_to_group",
@@ -39,7 +39,7 @@ var listenForGroupCreationAndSendNotifications = function() {
                             function() {}
                         );
                     });
-                //}
+                }
             });
         } else { 
             console.log("group " + groupName + " is expired");
@@ -49,8 +49,6 @@ var listenForGroupCreationAndSendNotifications = function() {
 
 var configureGroupAddPushNote = function (username, groupName) {
       var note = new apn.Notification();
-      console.log('sending push notification: @' 
-          + username + ' added you to group: ' + groupName);
       note.alert = '@' + username +' added you to group: ' + groupName;
       return note;
 };
@@ -67,8 +65,7 @@ var watchForNewMemberFromGroupId = function (groupId, callback) {
     ref.child('group_chats/members/' + groupId)
     .on('child_added', function (snap) {
         var userAddedToGroup = snap.name();
-        console.log("user in group: ", userAddedToGroup);
-
+        console.log("new user " + userAddedToGroup + " in group " + groupId);
         callback(userAddedToGroup);
     });
 };

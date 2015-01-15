@@ -44,7 +44,6 @@ var listenForNewStatusLikesAndSendNotifications = function() {
 
 var configureStatusLikePushNote = function (name) {
       var note = new apn.Notification();
-      console.log('sending push notification: ' + name + ' liked your status');
       note.alert = name +' liked your status';
       return note;
 };
