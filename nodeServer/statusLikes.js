@@ -27,10 +27,12 @@ var listenForNewStatusLikesAndSendNotifications = function() {
                     };
 
                     // create note and send push
-                    getNameFromUserId(notification.likeUserId, function(name) {
+                    getNameFromUserId(likeUserId, function(name) {
                         var pushNote = configureStatusLikePushNote(name);
                         apnServices.addNotificationToFirebaseAndSendPush(notification, pushNote, 
-                          function() {});
+                          function() {
+                            ref.child("status_likes/" + notification.key).set("push_sent");
+                          });
                     });
                 });
             } else {

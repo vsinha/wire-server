@@ -9,8 +9,7 @@ var start = function () {
 };
 
 var listenForNewMessagesAndSendNotifications = function () {
-    ref.child('statuses')
-    .on('child_added', function (snap) {
+    ref.child('statuses').on('child_added', function (snap) {
         var status = snap.val();
         status.id = snap.name();
 
