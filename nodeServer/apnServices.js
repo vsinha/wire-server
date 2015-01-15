@@ -26,17 +26,12 @@ var apnConnection = new apn.Connection(options);
 var ref;
 
 var addNotificationToFirebase = function(notification, callback) {
-    // check if the notification has already been created
-    ref.child("notification_receipts/" + notification.type + '/' + notification.key).once('value', function(snap) {
-        if (!snap.val()) {
-            // add the notification
-            var pushRef = ref.child('notifications').push(notification);
-            var notificationId = pushRef.name();
+    // add the notification
+    var pushRef = ref.child('notifications').push(notification);
+    var notificationId = pushRef.name();
 
-            // add index to the user's notifications
-            ref.child('users/' + notification.user_id + '/notifications/' + notificationId).set(true);
-        }
-    });
+    // add index to the user's notifications
+    ref.child('users/' + notification.user_id + '/notifications/' + notificationId).set(true);
 }
 
 var sendPushNotificationToUserId = function (userId, pushNote, successCallback) {
@@ -61,15 +56,18 @@ var deviceFromTokenString = function (deviceToken) {
 
 var addNotificationToFirebaseAndSendPush = function(notification, pushNote, callback) {
     ref = require('./myFirebase').adminRef;
-    addNotificationToFirebase(notification);
 
-    sendPushNotificationToUserId(notification.user_id, pushNote, function() {
-        // execute this on success
+    // check if the notification has already been created
+    ref.child("notification_receipts/" + notification.type + '/' + notification.key).once('value', function(snap) {
+        if (!snap.val()) {
+            addNotificationToFirebase(notification);
 
-        // use this for flagging sent notifications:
-        ref.child("notification_receipts/" + notification.type + '/' + notification.key).set(true);
-
-        callback();
+            sendPushNotificationToUserId(notification.user_id, pushNote, function() {
+                // use this for flagging sent notifications:
+                ref.child("notification_receipts/" + notification.type + '/' + notification.key).set(true);
+                callback();
+            });
+        }
     });
 };
 

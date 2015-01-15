@@ -18,7 +18,7 @@ var listenForNewStatusLikesAndSendNotifications = function() {
             if (statusId && likeUserId) {
                 getStatusFromId(statusId, function(status) {
                     var notification = {
-                        key: status.id + ":" + like_user_id,
+                        key: status.id + ":" + likeUserId,
                         type: "status_like",
                         user_id: status.user_id,
                         like_user_id: likeUserId,
@@ -27,7 +27,7 @@ var listenForNewStatusLikesAndSendNotifications = function() {
                     };
 
                     // create note and send push
-                    getNameFromUserId(notification.like_user_id, function(name) {
+                    getNameFromUserId(notification.likeUserId, function(name) {
                         var pushNote = configureStatusLikePushNote(name);
                         apnServices.addNotificationToFirebaseAndSendPush(notification, pushNote, 
                           function() {});

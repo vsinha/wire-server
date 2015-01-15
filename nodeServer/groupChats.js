@@ -14,42 +14,35 @@ var start = function () {
 // notify users when they are added to a group chat
 var listenForGroupCreationAndSendNotifications = function() {
     // listen for newly created groups
-    ref.child('group_chats/group').on('child_added', function (snap) {
-        var groupId = snap.name();
-        var groupCreatorId = snap.val().created_by;
-        var groupName = snap.val().name;
+    watchLivingGroups( function (groupId, group) {
+        var groupCreatorId = group.created_by;
+        var groupName = group.name;
 
-        if (!snap.val().expired) {
-            console.log("watching group: " + groupName);
-            watchForNewMemberFromGroupId(groupId, function(newlyAddedUserId) {
-                // send a notification to the added member
-                if (newlyAddedUserId != groupCreatorId) {
-                    var notification = {
-                        key: groupId + ':' + newlyAddedUserId,
-                        type: "added_to_group",
-                        group_id: groupId,
-                        user_id: newlyAddedUserId,
-                        created_at: Date.now()
-                    }
+        watchForNewMemberFromGroupId(groupId, function(newlyAddedUserId) {
+            if (newlyAddedUserId === groupCreatorId) { return; }
 
-                    // create note and send push
-                    getNameFromUserId(groupCreatorId, function(creatorName) {
-                        var pushNote = configureGroupAddPushNote(creatorName, groupName);
-                        apnServices.addNotificationToFirebaseAndSendPush(notification, pushNote,
-                            function() {}
-                        );
-                    });
-                }
+            // send a notification to the added member
+            var notification = {
+                key: groupId + ':' + newlyAddedUserId,
+                type: "added_to_group",
+                group_id: groupId,
+                user_id: newlyAddedUserId,
+                created_at: Date.now()
+            }
+
+            getNameFromUserId(groupCreatorId, function(creatorName) {
+                var pushNote = configureGroupAddPushNote(creatorName, groupName);
+                apnServices.addNotificationToFirebaseAndSendPush(notification, pushNote,
+                    function() {}
+                );
             });
-        } else { 
-            console.log("group " + groupName + " is expired");
-        }
+        });
     });
 };
 
 var configureGroupAddPushNote = function (username, groupName) {
       var note = new apn.Notification();
-      note.alert = '@' + username +' added you to group: ' + groupName;
+      note.alert = username +' added you to a group: ' + groupName;
       return note;
 };
 
@@ -62,18 +55,82 @@ var getNameFromUserId = function(userId, callback) {
 };
 
 var watchForNewMemberFromGroupId = function (groupId, callback) {
-    ref.child('group_chats/members/' + groupId)
-    .on('child_added', function (snap) {
+    ref.child('group_chats/members/' + groupId).on('child_added', function (snap) {
         var userAddedToGroup = snap.name();
         console.log("new user " + userAddedToGroup + " in group " + groupId);
         callback(userAddedToGroup);
     });
 };
 
-
 // notify users when there are messages in group chats 
 // in which they participate and they have notifications enabled
 var listenForNewGroupMessagesAndSendNotifications = function() {
+    watchLivingGroups( function(groupId, group) {
+
+        watchForNewMessagesFromGroupId(groupId, group, function(newMessage) {
+
+            getEachSubscribedUserInGroup(groupId, function(user) {
+                if (user.id === newMessage.created_by) { return; } 
+
+                var notification = {
+                    key: groupId + ':' + user.id,
+                    type: "message",
+                    group_id: groupId,
+                    user_id: user.id,
+                    created_at: Date.now()
+                }
+
+                getNameFromUserId(newMessage.created_by, function(creatorName) {
+                    var pushNote = configureGroupMessagePushNote(creatorName, group.name, 
+                        newMessage.text);
+                    apnServices.addNotificationToFirebaseAndSendPush(notification, pushNote, 
+                        function () {}
+                    );
+                });
+            });
+        });
+    });
+};
+
+var configureGroupMessagePushNote = function (username, groupName, messageText) {
+    var note = new apn.Notification();
+    note.alert = username + ' to ' + groupName + ": " + messageText;
+    return note;
+}
+
+var getEachSubscribedUserInGroup = function(groupId, callback) {
+    ref.child("group_chats/notifications/" + groupId).once("value", function(snap) {
+        var users = snap.val();
+        if (users != null) { // at least someone is subscribed for notifications
+            for (user in users) {
+                if (!users.hasOwnProperty(user)) { continue; }
+                    // call our callback for each subscribed user
+                    callback(users);
+            }
+        } else {
+            console.log("no one subscribed to notifications in " + groupId);
+        }
+    });
+};
+
+var watchLivingGroups = function(callback) {
+    ref.child("group_chats/group").on("child_added", function(snap) {
+        var groupId = snap.name();
+        var group = snap.val();
+        if (!group.expired) { 
+            callback(groupId, group);
+        }
+    });
+};
+
+var watchForNewMessagesFromGroupId = function(groupId, group, callback) {
+    console.log("waiting for messages in: " + group.name);
+
+    ref.child("group_chats/messages/" + groupId).on("child_added", function(snap) {
+        var newMessage = snap.val();
+        console.log("new message: " + newMessage.text);
+        callback(newMessage);
+    });
 };
 
 module.exports.start = start;
