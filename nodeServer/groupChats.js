@@ -26,7 +26,7 @@ var listenForGroupCreationAndSendNotifications = function() {
                 // if (newlyAddedUserId != groupCreatorId) {
                     var notification = {
                         key: groupId + ':' + newlyAddedUserId,
-                        type: "notification_added_to_group",
+                        type: "added_to_group",
                         group_id: groupId,
                         user_id: newlyAddedUserId,
                         created_at: Date.now()
@@ -35,7 +35,7 @@ var listenForGroupCreationAndSendNotifications = function() {
                     // create note and send push
                     getNameFromUserId(groupCreatorId, function(creatorName) {
                         var pushNote = configureGroupAddPushNote(creatorName, groupName);
-                        apnServices.addNotificationToFirebaseAndSendPush(notification, pushNote
+                        apnServices.addNotificationToFirebaseAndSendPush(notification, pushNote,
                             function() {}
                         );
                     });

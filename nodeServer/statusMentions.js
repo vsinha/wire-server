@@ -25,7 +25,7 @@ var listenForNewMessagesAndSendNotifications = function () {
                 getUserIdFromUsername(username, function (userId) {
                     var notification = {
                         key: status.id + ':' + userId,
-                        type: 'notification_mention',
+                        type: 'mention',
                         status_id: status.id,
                         user_id: userId,
                         created_at: Date.now()
@@ -33,9 +33,7 @@ var listenForNewMessagesAndSendNotifications = function () {
 
                     var pushNote = configureMentionPushNote(username);
                     apnServices.addNotificationToFirebaseAndSendPush(notification, pushNote, 
-                        function() {
-                          ref.child('mention_notifications/'+statusUserIdKey).set(true);
-                        }
+                        function() {}
                     );
                 });
             }

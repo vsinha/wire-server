@@ -19,7 +19,7 @@ var listenForNewStatusLikesAndSendNotifications = function() {
                 getStatusFromId(statusId, function(status) {
                     var notification = {
                         key: status.id + ":" + like_user_id,
-                        type: "notification_status_like",
+                        type: "status_like",
                         user_id: status.user_id,
                         like_user_id: likeUserId,
                         status_id: status.id,
