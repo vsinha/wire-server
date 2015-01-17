@@ -31,8 +31,8 @@ var listenForGroupCreationAndSendNotifications = function() {
                 created_at: Date.now()
             };
 
-            getNameFromUserId(memberUserId, function(creatorName) {
-                var pushNote = configureGroupAddPushNote(creatorName, groupName);
+            getNameFromUserId(memberUserId, function(memberName) {
+                var pushNote = configureGroupAddPushNote(memberName, groupName);
                 apnServices.addNotificationToFirebaseAndSendPush(notification, pushNote,
                     function() {}
                 );
