@@ -79,7 +79,7 @@ var listenForNewGroupMessagesAndSendNotifications = function() {
                 datestamp = datestamp.replace(".","");
 
                 var notification = {
-                    key: groupId + ":" + datestamp + ":" + userId;
+                    key: groupId + ":" + datestamp + ":" + userId,
                     type: "message",
                     group_id: groupId,
                     user_id: userId,
