@@ -1,11 +1,11 @@
-var apn = require('apn');
-var apnServices = require('./apnServices');
+var apn = require("apn");
+var apnServices = require("./apnServices");
 
 var ref;
 var start = function () {
-    console.log('Started group message notifications');
+    console.log("Started group message notifications");
 
-    ref = require('./myFirebase').adminRef;
+    ref = require("./myFirebase").adminRef;
 
     listenForGroupCreationAndSendNotifications();
     listenForNewGroupMessagesAndSendNotifications();
@@ -23,7 +23,7 @@ var listenForGroupCreationAndSendNotifications = function() {
 
             // send a notification to the added member
             var notification = {
-                key: groupId + ':' + newlyAddedUserId,
+                key: groupId + ":" + newlyAddedUserId,
                 type: "added_to_group",
                 group_id: groupId,
                 member_user_id: memberUserId,
@@ -43,20 +43,20 @@ var listenForGroupCreationAndSendNotifications = function() {
 
 var configureGroupAddPushNote = function (username, groupName) {
       var note = new apn.Notification();
-      note.alert = username +' added you to a group: ' + groupName;
+      note.alert = username +" added you to a group: " + groupName;
       return note;
 };
 
 var getNameFromUserId = function(userId, callback) {
-    ref.child('users/' + userId + '/public_profile/name')
-    .once('value', function (snap) {
+    ref.child("users/" + userId + "/public_profile/name")
+    .once("value", function (snap) {
         var name = snap.val();
         callback(name);
     });
 };
 
 var watchForNewMemberFromGroupId = function (groupId, callback) {
-    ref.child('group_chats/members/' + groupId).on('child_added', function (snap) {
+    ref.child("group_chats/members/" + groupId).on("child_added", function (snap) {
         var userAddedToGroup = snap.name();
         var memberUserId = snap.val();
         console.log(memberUserId + "added " + userAddedToGroup + " to group " + groupId);
@@ -76,7 +76,7 @@ var listenForNewGroupMessagesAndSendNotifications = function() {
                 if (userId === newMessage.user_id) { return; }
 
                 var datestamp = String(newMessage.created_at);
-                datestamp = datestamp.replace('.','');
+                datestamp = datestamp.replace(".","");
 
                 var notification = {
                     key: groupId + ":" + datestamp + ":" + userId;
@@ -100,7 +100,7 @@ var listenForNewGroupMessagesAndSendNotifications = function() {
 
 var configureGroupMessagePushNote = function (username, groupName, messageText) {
     var note = new apn.Notification();
-    note.alert = username + ' to ' + groupName + ": " + messageText;
+    note.alert = username + " to " + groupName + ": " + messageText;
     return note;
 }
 

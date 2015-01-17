@@ -1,15 +1,15 @@
-var apn = require('apn');
-var apnServices = require('./apnServices');
+var apn = require("apn");
+var apnServices = require("./apnServices");
 
 var ref;
 var start = function () {
-    console.log('Starting Status Mentions Push Server');
-    ref = require('./myFirebase').adminRef;
+    console.log("Starting Status Mentions Push Server");
+    ref = require("./myFirebase").adminRef;
     listenForNewMessagesAndSendNotifications();
 };
 
 var listenForNewMessagesAndSendNotifications = function () {
-    ref.child('statuses').on('child_added', function (snap) {
+    ref.child("statuses").on("child_added", function (snap) {
         var status = snap.val();
         status.id = snap.name();
 
@@ -23,8 +23,8 @@ var listenForNewMessagesAndSendNotifications = function () {
 
                 getUserIdFromUsername(username, function (userId) {
                     var notification = {
-                        key: status.id + ':' + userId,
-                        type: 'mention',
+                        key: status.id + ":" + userId,
+                        type: "mention",
                         status_id: status.id,
                         user_id: userId,
                         created_at: Date.now()
@@ -42,21 +42,21 @@ var listenForNewMessagesAndSendNotifications = function () {
 
 var configureMentionPushNote = function (username) {
       var note = new apn.Notification();
-      note.alert = '@' + username +' mentioned you in a status';
+      note.alert = "@" + username +" mentioned you in a status";
       return note;
 };
 
 var getUserIdFromUsername = function(username, callback) {
-    ref.child('usernames/' + username)
-    .once('value', function (snap) {
+    ref.child("usernames/" + username)
+    .once("value", function (snap) {
         var userId = snap.val();
         callback(userId);
     });
 };
 
 var getUsernameFromUserId = function(userId, callback) {
-    ref.child('users/' + userId + '/public_profile/username')
-    .once('value', function (snap) {
+    ref.child("users/" + userId + "/public_profile/username")
+    .once("value", function (snap) {
         var username = snap.val();
         callback(username);
     });
@@ -73,7 +73,7 @@ var startFeedbackChecker = function () {
     feedback.on("feedback", function(devices) {
         devices.forEach(function(item) {
             // Do something with item.device and item.time;
-            console.log('feedback', item);
+            console.log("feedback", item);
         });
     });
 };

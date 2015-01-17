@@ -1,9 +1,9 @@
-var apn = require('apn');
+var apn = require("apn");
 
 // configure server options and export
-var serverType = process.argv[2] || 'dev';
+var serverType = process.argv[2] || "dev";
 switch (serverType) {
-    case 'dev':
+    case "dev":
         console.log("Starting server as dev");
         var options = {
             cert: "certificates/devCert.pem",
@@ -11,7 +11,7 @@ switch (serverType) {
             production: false
         };
         break;
-    case 'prod':
+    case "prod":
         console.log("Starting server as prod");
         var options = {
             cert: "certificates/prodCert.pem",
@@ -27,16 +27,16 @@ var ref;
 
 var addNotificationToFirebase = function(notification, callback) {
     // add the notification
-    var pushRef = ref.child('notifications').push(notification);
+    var pushRef = ref.child("notifications").push(notification);
     var notificationId = pushRef.name();
 
     // add index to the user's notifications
-    ref.child('users/' + notification.user_id + '/notifications/' + notificationId).set(true);
+    ref.child("users/" + notification.user_id + "/notifications/" + notificationId).set(true);
 }
 
 var sendPushNotificationToUserId = function (userId, pushNote, successCallback) {
-    ref.child('users/' + userId + '/installation')
-    .once('value', function (snap) {
+    ref.child("users/" + userId + "/installation")
+    .once("value", function (snap) {
         var installation = snap.val();
         if (installation && installation.device_token) {
             console.log("sending push notification to " + userId + ": " + pushNote.alert);
@@ -49,24 +49,22 @@ var sendPushNotificationToUserId = function (userId, pushNote, successCallback) 
 
 var deviceFromTokenString = function (deviceToken) {
     var b64token = deviceToken;
-    var buf = new Buffer(b64token, 'base64');
+    var buf = new Buffer(b64token, "base64");
     var device = new apn.Device(buf);
     return device;
 };
 
 var addNotificationToFirebaseAndSendPush = function(notification, pushNote, callback) {
-    ref = require('./myFirebase').adminRef;
+    ref = require("./myFirebase").adminRef;
 
-    console.log("checking if notification has been created");
     // check if the notification has already been created
-    ref.child("notification_receipts/" + notification.type + '/' + notification.key).once('value', function(snap) {
-        console.log("notification has not been created, creating...");
+    ref.child("notification_receipts/" + notification.type + "/" + notification.key).once("value", function(snap) {
         if (!snap.val()) {
             addNotificationToFirebase(notification);
 
             sendPushNotificationToUserId(notification.user_id, pushNote, function() {
                 // use this for flagging sent notifications:
-                ref.child("notification_receipts/" + notification.type + '/' + notification.key).set(true);
+                ref.child("notification_receipts/" + notification.type + "/" + notification.key).set(true);
                 callback();
             });
         }

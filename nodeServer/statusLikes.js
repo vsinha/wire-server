@@ -1,17 +1,17 @@
-var apn = require('apn');
-var apnServices = require('./apnServices');
+var apn = require("apn");
+var apnServices = require("./apnServices");
 
 var ref;
 var start = function() {
-    console.log('Likes Push Server');
-    ref = require('./myFirebase').adminRef;
+    console.log("Likes Push Server");
+    ref = require("./myFirebase").adminRef;
     listenForNewStatusLikesAndSendNotifications();
 };
 
 var listenForNewStatusLikesAndSendNotifications = function() {
-    ref.child('status_likes').on('child_added', function (snap) {
+    ref.child("status_likes").on("child_added", function (snap) {
         if (snap.val() === "new") {
-            var params = snap.name().split(':');
+            var params = snap.name().split(":");
             var statusId = params[0];
             var likeUserId = params[1];
 
@@ -46,12 +46,12 @@ var listenForNewStatusLikesAndSendNotifications = function() {
 
 var configureStatusLikePushNote = function (name) {
       var note = new apn.Notification();
-      note.alert = name +' liked your status';
+      note.alert = name +" liked your status";
       return note;
 };
 
 var getStatusFromId = function (statusId, callback) {
-    ref.child('statuses/'+statusId).once('value', function (snap) {
+    ref.child("statuses/"+statusId).once("value", function (snap) {
         var status = snap.val();
         status.id = statusId;
         callback(status);
@@ -59,8 +59,8 @@ var getStatusFromId = function (statusId, callback) {
 };
 
 var getNameFromUserId = function(userId, callback) {
-    ref.child('users/' + userId + '/public_profile/name')
-    .once('value', function (snap) {
+    ref.child("users/" + userId + "/public_profile/name")
+    .once("value", function (snap) {
         var name = snap.val();
         callback(name);
     });
