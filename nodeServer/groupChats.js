@@ -1,11 +1,11 @@
-var apn = require('apn');
-var apnServices = require('./apnServices');
+var apn = require("apn");
+var apnServices = require("./apnServices");
 
 var ref;
 var start = function () {
-    console.log('Started group message notifications');
+    console.log("Started group message notifications");
 
-    ref = require('./myFirebase').adminRef;
+    ref = require("./myFirebase").adminRef;
 
     listenForGroupCreationAndSendNotifications();
     listenForNewGroupMessagesAndSendNotifications();
@@ -23,7 +23,7 @@ var listenForGroupCreationAndSendNotifications = function() {
 
             // send a notification to the added member
             var notification = {
-                key: groupId + ':' + newlyAddedUserId,
+                key: groupId + ":" + newlyAddedUserId,
                 type: "added_to_group",
                 group_id: groupId,
                 member_user_id: memberUserId,
@@ -43,20 +43,20 @@ var listenForGroupCreationAndSendNotifications = function() {
 
 var configureGroupAddPushNote = function (username, groupName) {
       var note = new apn.Notification();
-      note.alert = username +' added you to a group: ' + groupName;
+      note.alert = username +" added you to a group: " + groupName;
       return note;
 };
 
 var getNameFromUserId = function(userId, callback) {
-    ref.child('users/' + userId + '/public_profile/name')
-    .once('value', function (snap) {
+    ref.child("users/" + userId + "/public_profile/name")
+    .once("value", function (snap) {
         var name = snap.val();
         callback(name);
     });
 };
 
 var watchForNewMemberFromGroupId = function (groupId, callback) {
-    ref.child('group_chats/members/' + groupId).on('child_added', function (snap) {
+    ref.child("group_chats/members/" + groupId).on("child_added", function (snap) {
         var userAddedToGroup = snap.name();
         var memberUserId = snap.val();
         console.log(memberUserId + "added " + userAddedToGroup + " to group " + groupId);
@@ -71,18 +71,22 @@ var listenForNewGroupMessagesAndSendNotifications = function() {
 
         watchForNewMessagesFromGroupId(groupId, group, function(newMessage) {
 
-            getEachSubscribedUserInGroup(groupId, function(user) {
-                if (user.id === newMessage.created_by) { return; }
+            getEachSubscribedUserInGroup(groupId, function(userId) {
+                console.log(userId + " " + newMessage.user_id);
+                if (userId === newMessage.user_id) { return; }
+
+                var datestamp = String(newMessage.created_at);
+                datestamp = datestamp.replace(".","");
 
                 var notification = {
-                    key: groupId + ':' + user.id,
+                    key: groupId + ":" + datestamp + ":" + userId;
                     type: "message",
                     group_id: groupId,
-                    user_id: user.id,
+                    user_id: userId,
                     created_at: Date.now()
                 };
 
-                getNameFromUserId(newMessage.created_by, function(creatorName) {
+                getNameFromUserId(newMessage.user_id, function(creatorName) {
                     var pushNote = configureGroupMessagePushNote(creatorName, group.name, 
                         newMessage.text);
                     apnServices.addNotificationToFirebaseAndSendPush(notification, pushNote, 
@@ -96,7 +100,7 @@ var listenForNewGroupMessagesAndSendNotifications = function() {
 
 var configureGroupMessagePushNote = function (username, groupName, messageText) {
     var note = new apn.Notification();
-    note.alert = username + ' to ' + groupName + ": " + messageText;
+    note.alert = username + " to " + groupName + ": " + messageText;
     return note;
 }
 
@@ -105,9 +109,10 @@ var getEachSubscribedUserInGroup = function(groupId, callback) {
         var users = snap.val();
         if (users != null) { // at least someone is subscribed for notifications
             for (user in users) {
+                console.log("userId: " + user);
                 if (!users.hasOwnProperty(user)) { continue; }
                     // call our callback for each subscribed user
-                    callback(users);
+                    callback(user);
             }
         } else {
             console.log("no one subscribed to notifications in " + groupId);
