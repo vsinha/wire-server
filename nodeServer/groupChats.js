@@ -72,7 +72,6 @@ var listenForNewGroupMessagesAndSendNotifications = function() {
         watchForNewMessagesFromGroupId(groupId, group, function(newMessage) {
 
             getEachSubscribedUserInGroup(groupId, function(userId) {
-                console.log(userId + " " + newMessage.user_id);
                 if (userId === newMessage.user_id) { return; }
 
                 var datestamp = String(newMessage.created_at);
@@ -109,7 +108,6 @@ var getEachSubscribedUserInGroup = function(groupId, callback) {
         var users = snap.val();
         if (users != null) { // at least someone is subscribed for notifications
             for (user in users) {
-                console.log("userId: " + user);
                 if (!users.hasOwnProperty(user)) { continue; }
                     // call our callback for each subscribed user
                     callback(user);
