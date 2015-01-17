@@ -26,7 +26,7 @@ var listenForGroupCreationAndSendNotifications = function() {
                 key: groupId + ':' + newlyAddedUserId,
                 type: "added_to_group",
                 group_id: groupId,
-                member_user_Id: groupCreatorId,
+                member_user_id: groupCreatorId,
                 user_id: newlyAddedUserId,
                 created_at: Date.now()
             }
