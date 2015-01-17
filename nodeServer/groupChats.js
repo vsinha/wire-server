@@ -19,7 +19,7 @@ var listenForGroupCreationAndSendNotifications = function() {
         var groupName = group.name;
 
         watchForNewMemberFromGroupId(groupId, function(newlyAddedUserId, memberUserId) {
-            if (newlyAddedUserId === groupCreatorId) { return; }
+            if (newlyAddedUserId === memberUserId) { return; }
 
             // send a notification to the added member
             var notification = {
