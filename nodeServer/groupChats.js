@@ -18,7 +18,7 @@ var listenForGroupCreationAndSendNotifications = function() {
         var groupCreatorId = group.created_by;
         var groupName = group.name;
 
-        watchForNewMemberFromGroupId(groupId, function(newlyAddedUserId) {
+        watchForNewMemberFromGroupId(groupId, function(newlyAddedUserId, memberUserId) {
             if (newlyAddedUserId === groupCreatorId) { return; }
 
             // send a notification to the added member
@@ -26,10 +26,10 @@ var listenForGroupCreationAndSendNotifications = function() {
                 key: groupId + ':' + newlyAddedUserId,
                 type: "added_to_group",
                 group_id: groupId,
-                member_user_id: groupCreatorId,
+                member_user_id: memberUserId,
                 user_id: newlyAddedUserId,
                 created_at: Date.now()
-            }
+            };
 
             getNameFromUserId(groupCreatorId, function(creatorName) {
                 var pushNote = configureGroupAddPushNote(creatorName, groupName);
@@ -58,8 +58,9 @@ var getNameFromUserId = function(userId, callback) {
 var watchForNewMemberFromGroupId = function (groupId, callback) {
     ref.child('group_chats/members/' + groupId).on('child_added', function (snap) {
         var userAddedToGroup = snap.name();
-        console.log("new user " + userAddedToGroup + " in group " + groupId);
-        callback(userAddedToGroup);
+        var memberUserId = snap.val();
+        console.log(memberUserId + "added " + userAddedToGroup + " to group " + groupId);
+        callback(userAddedToGroup, memberUserId);
     });
 };
 
@@ -71,7 +72,7 @@ var listenForNewGroupMessagesAndSendNotifications = function() {
         watchForNewMessagesFromGroupId(groupId, group, function(newMessage) {
 
             getEachSubscribedUserInGroup(groupId, function(user) {
-                if (user.id === newMessage.created_by) { return; } 
+                if (user.id === newMessage.created_by) { return; }
 
                 var notification = {
                     key: groupId + ':' + user.id,
@@ -79,7 +80,7 @@ var listenForNewGroupMessagesAndSendNotifications = function() {
                     group_id: groupId,
                     user_id: user.id,
                     created_at: Date.now()
-                }
+                };
 
                 getNameFromUserId(newMessage.created_by, function(creatorName) {
                     var pushNote = configureGroupMessagePushNote(creatorName, group.name, 
