@@ -57,8 +57,10 @@ var deviceFromTokenString = function (deviceToken) {
 var addNotificationToFirebaseAndSendPush = function(notification, pushNote, callback) {
     ref = require('./myFirebase').adminRef;
 
+    console.log("checking if notification has been created");
     // check if the notification has already been created
     ref.child("notification_receipts/" + notification.type + '/' + notification.key).once('value', function(snap) {
+        console.log("notification has not been created, creating...");
         if (!snap.val()) {
             addNotificationToFirebase(notification);
 
