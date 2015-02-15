@@ -22,16 +22,18 @@ var listenForNewMessagesAndSendNotifications = function () {
                 username = username.substring(1, username.length-1);
 
                 getUserIdFromUsername(username, function (userId) {
-                    var notification = {
-                        key: status.id + ":" + userId,
+                    var notificationKey = status.id + ":" + userId;
+
+                    var notificationObj = {
                         type: "mention",
                         status_id: status.id,
                         user_id: userId,
-                        created_at: Date.now()
+                        created_at: Date.now(),
+                        push_notification_sent: false
                     };
 
                     var pushNote = configureMentionPushNote(username);
-                    apnServices.addNotificationToFirebaseAndSendPush(notification, pushNote, 
+                    apnServices.addNotificationToFirebaseAndSendPush(notificationKey, notificationObj, pushNote, 
                         function() {}
                     );
                 });

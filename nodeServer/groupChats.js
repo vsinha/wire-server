@@ -77,18 +77,20 @@ var listenForNewGroupMessagesAndSendNotifications = function() {
                 var datestamp = String(newMessage.created_at);
                 datestamp = datestamp.replace(".","");
 
-                var notification = {
-                    key: groupId + ":" + datestamp + ":" + userId,
+                var notificationKey = groupId + ":" + datestamp + ":" + userId;
+
+                var notificationObj = {
                     type: "message",
                     group_id: groupId,
                     user_id: userId,
-                    created_at: Date.now()
+                    created_at: Date.now(),
+                    push_notification_sent: false
                 };
 
                 getNameFromUserId(newMessage.user_id, function(creatorName) {
                     var pushNote = configureGroupMessagePushNote(creatorName, group.name, 
                         newMessage.text);
-                    apnServices.addNotificationToFirebaseAndSendPush(notification, pushNote, 
+                    apnServices.addNotificationToFirebaseAndSendPush(notificationKey, notificationObj, pushNote, 
                         function () {}
                     );
                 });

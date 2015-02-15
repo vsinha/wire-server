@@ -25,13 +25,12 @@ switch (serverType) {
 var apnConnection = new apn.Connection(options);
 var ref;
 
-var addNotificationToFirebase = function(notification, callback) {
+var addNotificationToFirebase = function(notificationKey, notificationObj) {
     // add the notification
-    var pushRef = ref.child("notifications").push(notification);
-    var notificationId = pushRef.name();
+    var pushRef = ref.child("notifications/" + notificationKey).set(notificationObj);
 
     // add index to the user's notifications
-    ref.child("users/" + notification.user_id + "/notifications/" + notificationId).set(true);
+    ref.child("users/" + notificationObj.user_id + "/notifications/" + notificationKey).set(true);
 }
 
 var sendPushNotificationToUserId = function (userId, pushNote, successCallback) {
@@ -54,19 +53,23 @@ var deviceFromTokenString = function (deviceToken) {
     return device;
 };
 
-var addNotificationToFirebaseAndSendPush = function(notification, pushNote, callback) {
+var addNotificationToFirebaseAndSendPush = function(notificationKey, notificationObj, pushNote, callback) {
     ref = require("./myFirebase").adminRef;
 
     // check if the notification has already been created
-    ref.child("notification_receipts/" + notification.type + "/" + notification.key).once("value", function(snap) {
-        if (!snap.val()) {
-            addNotificationToFirebase(notification);
+    ref.child("notifications/" + notificationKey + "/push_notification_sent").once("value", function(snap) {
+        console.log("checking notification: " + notificationKey + " " + snap.val());
+        if (!snap.val() || snap.val() == false) {
+            console.log("notification hasn't been sent!");
+            addNotificationToFirebase(notificationKey, notificationObj);
 
-            sendPushNotificationToUserId(notification.user_id, pushNote, function() {
+            sendPushNotificationToUserId(notificationObj.user_id, pushNote, function() {
                 // use this for flagging sent notifications:
-                ref.child("notification_receipts/" + notification.type + "/" + notification.key).set(true);
+                ref.child("notifications/" + notificationKey + "/push_notification_sent").set(true);
                 callback();
             });
+        } else {
+            console.log("notification has been sent!");
         }
     });
 };
