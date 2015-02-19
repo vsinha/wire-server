@@ -9,9 +9,9 @@ var start = function () {
 };
 
 var listenForNewMessagesAndSendNotifications = function () {
-    ref.child("statuses").on("child_added", function (snap) {
-        var status = snap.val();
-        status.id = snap.name();
+    ref.child("statuses").on("child_changed", function (childSnap, prevChild) {
+        var status = childSnap.val();
+        status.id = childSnap.name();
 
         var regex = /@.*?\s/;
         var usernames = status.text.match(regex);
@@ -30,7 +30,7 @@ var listenForNewMessagesAndSendNotifications = function () {
                         created_at: Date.now()
                     };
 
-                    var pushNote = configureMentionPushNote(username);
+                    var pushNote = configureMentionPushNote(userId);
                     apnServices.addNotificationToFirebaseAndSendPush(notification, pushNote, 
                         function() {}
                     );
