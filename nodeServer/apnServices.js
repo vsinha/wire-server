@@ -54,6 +54,7 @@ var deviceFromTokenString = function (deviceToken) {
     return device;
 };
 
+
 var addNotificationToFirebaseAndSendPush = function(notification, pushNote, callback) {
     ref = require("./myFirebase").adminRef;
 
