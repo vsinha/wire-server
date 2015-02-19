@@ -72,24 +72,25 @@ var listenForNewGroupMessagesAndSendNotifications = function() {
         watchForNewMessagesFromGroupId(groupId, group, function(newMessage) {
 
             getEachSubscribedUserInGroup(groupId, function(userId) {
-                console.log(userId + " " + newMessage.user_id);
                 if (userId === newMessage.user_id) { return; }
 
                 var datestamp = String(newMessage.created_at);
                 datestamp = datestamp.replace(".","");
 
-                var notification = {
-                    key: groupId + ":" + datestamp + ":" + userId,
+                var notificationKey = groupId + ":" + datestamp + ":" + userId;
+
+                var notificationObj = {
                     type: "message",
                     group_id: groupId,
                     user_id: userId,
-                    created_at: Date.now()
+                    created_at: Date.now(),
+                    push_notification_sent: false
                 };
 
                 getNameFromUserId(newMessage.user_id, function(creatorName) {
                     var pushNote = configureGroupMessagePushNote(creatorName, group.name, 
                         newMessage.text);
-                    apnServices.addNotificationToFirebaseAndSendPush(notification, pushNote, 
+                    apnServices.addNotificationToFirebaseAndSendPush(notificationKey, notificationObj, pushNote, 
                         function () {}
                     );
                 });
@@ -109,7 +110,6 @@ var getEachSubscribedUserInGroup = function(groupId, callback) {
         var users = snap.val();
         if (users != null) { // at least someone is subscribed for notifications
             for (user in users) {
-                console.log("userId: " + user);
                 if (!users.hasOwnProperty(user)) { continue; }
                     // call our callback for each subscribed user
                     callback(user);

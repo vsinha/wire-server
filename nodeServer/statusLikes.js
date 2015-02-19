@@ -17,22 +17,23 @@ var listenForNewStatusLikesAndSendNotifications = function() {
 
             if (statusId && likeUserId) {
                 getStatusFromId(statusId, function(status) {
-                    var notification = {
-                        key: status.id + ":" + likeUserId,
+                    var notificationKey = status.id + ":" + likeUserId;
+
+                    var notificationObj = {
                         type: "status_like",
                         user_id: status.user_id,
                         like_user_id: likeUserId,
                         status_id: status.id,
-                        created_at: Date.now()
+                        created_at: Date.now(),
+                        push_notification_sent: false
                     };
 
                     // create note and send push
                     getNameFromUserId(likeUserId, function(name) {
                         var pushNote = configureStatusLikePushNote(name);
-                        apnServices.addNotificationToFirebaseAndSendPush(notification, pushNote, 
-                          function() {
-                            ref.child("status_likes/" + notification.key).set("push_sent");
-                          });
+                        apnServices.addNotificationToFirebaseAndSendPush(notificationKey, notificationObj, pushNote, 
+                          function() {}
+                        );
                     });
                 });
             } else {
