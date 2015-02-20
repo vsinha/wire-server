@@ -72,7 +72,8 @@ var getUserHasOtherRecentStatus = function(userId, callback) {
     date.setHours(date.getHours() - RECENT_HOURS_AGO);
     var sixHoursAgo = date.valueOf();
 
-    // Check whether any 
+    // Check whether the user has posted any statuses in the last RECENT_HOURS_AGO
+    // hours.
     ref.child("users/" + userId + "/created_at")
     .startAt(sixHoursAgo)
     .once("value", function(snap) {
@@ -94,8 +95,8 @@ var getUserFromUserId = function(userId, callback) {
 };
 
 /*
- * Return true if the user and their friend are at most ten miles away from each
- * other right now, and false otherwise
+ * Return true if the user and their friend are at most NEABY_MILES miles away from each
+ * other right now, and false otherwise.
  */
 var usersAreNearby = function(user, friend) {
     var milesAway = distance(
