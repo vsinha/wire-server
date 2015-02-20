@@ -77,7 +77,7 @@ var getUserHasOtherRecentStatus = function(userId, callback) {
     ref.child("users/" + userId + "/created_at")
     .startAt(sixHoursAgo)
     .once("value", function(snap) {
-        var statuses = snap.val()
+        var statuses = snap.val();
         if (statuses.length === 0) {
             callback(false);
         } else {
