@@ -6,7 +6,7 @@ functions:                      #reusable boolean functions
   - deleteOnly():               prev.exists() && !next.exists()
   - createOrDelete():           createOnly() || deleteOnly()
   - isUser(user_id):            user_id === auth.uid
-  - isMember(event_id):         root['events/members/'+event_id+'/'+auth.uid].exists()
+  - isMember(event_id):         root['events/members/'+ event_id +'/' + auth.uid].exists()
 
 schema:
   # DEFINITIONS USED FOR REPEATED DATA SCHEMAS
@@ -24,9 +24,11 @@ schema:
   # BEGIN APP SCHEMA
   type: object
   properties:
+
     events:
       type: object
       properties:
+
         members:
           type: object
           $event_id:
@@ -39,6 +41,7 @@ schema:
           type: object
           $event_id:
             type: object
+            indexOn: .value
             properties:
               $message_id:
                 type: object
@@ -52,7 +55,10 @@ schema:
                   user_id:
                     type: number
                     constraint: isUser(next.val())
-                required: [created_at, location, text, user_id]
+                  type:
+                    type: string
+                    enum: [action, text]
+                required: [created_at, location, text, user_id, type]
                 additionalProperties: false
 
   additionalProperties: false
@@ -60,10 +66,16 @@ schema:
 access:
 
   # Only logged in users can read group_chats they are members of
-  - location: /events/messages/$event_id
+  - location: events/messages/$event_id/
     read:     isLoggedIn() && isMember($event_id)
 
+  - location: events/
+    write: true
+
+  - location: events/
+    read: true
+
   # Only logged in users can write group_chats they are members of
-  - location: /events/
+  - location: events/messages/$event_id/
     write:    isLoggedIn() && isMember($event_id)
 
