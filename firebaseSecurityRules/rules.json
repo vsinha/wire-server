@@ -6,7 +6,6 @@
       "members": {
         ".write": "false",
         ".read": "false",
-
         "$event_id": {
           "$user_id": {}
         }
@@ -24,9 +23,7 @@
             ".validate": "newData.hasChildren(['created_at', 'location', 'text', 'user_id', 'type'])",
 
             "created_at": {".validate": "newData.val() <= now"},
-
             "user_id": {".validate": "newData.val() === auth.uid"},
-
             "text": {".validate": "newData.isString()"},
 
             "location": {
@@ -34,10 +31,10 @@
               "long": {},
               "$other": {".validate": "false"}
             },
-
+            "invited_user_id": {".validate": "newData.isNumber()"},
             "type": {
               ".validate": "newData.isString() 
-                    && (newData.val() == 'action' || newData.val() == 'text')"
+                    && (newData.val() == 'action' || newData.val() == 'text' || newData.val() == 'invite_action')"
             },
             
             "$other": {".validate": "false"}
@@ -48,4 +45,3 @@
     "$other": {".validate":"false"}
   }
 }
-
